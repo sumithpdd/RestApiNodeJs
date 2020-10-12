@@ -1,16 +1,41 @@
 const { error } = require("console");
 const e = require("express");
 
-function listAllEmployees(req, res) {
-    const connection = req.app.locals.connection;
+// function listAllEmployees(req, res) {
+//     const connection = req.app.locals.connection;
 
-    connection.query('SELECT e.id, e.name, e.address,e.email,e.hired,e.dob,e.salary,e.bonus,e.photo, d.name as "Department" ,d.location FROM employees e JOIN departments d ON e.department =d.id',
-        (error, results) => {
-            if (error) {
-                return res.status(500).json(error);
-            }
-            return res.status(200).json(results);
-        });
+//     connection.query('SELECT e.id, e.name, e.address,e.email,e.hired,e.dob,e.salary,e.bonus,e.photo, d.name as "Department" ,d.location FROM employees e JOIN departments d ON e.department =d.id',
+//         (error, results) => {
+//             if (error) {
+//                 return res.status(500).json(error);
+//             }
+//             return res.status(200).json(results);
+//         });
+// }
+function listAllEmployees(req, res) {
+    const { knex } = req.app.locals;
+    const { orderBy } = req.query;
+    if (orderBy) {
+        const regex = /(.*)(:)(ASC|DESC)/ig;
+        if (regex.test(orderBy)) {
+            const [column, order] = orderBy.split(':');
+            knex
+                .select('name', 'address', 'email', 'hired', 'dob', 'salary', 'bonus', 'photo', 'department')
+                .from('employees')
+                .orderBy(column, order)
+                .then(data => res.status(200).json(data))
+                .catch(error => res.status(500).json(error));
+        } else {
+            return res.status(400).json('If using a filter please use [field]:ASC|DESC');
+        }
+    } else {
+        knex
+            .select('name', 'address', 'email', 'hired', 'dob', 'salary', 'bonus', 'photo', 'department')
+            .from('employees')
+            .then(data => res.status(200).json(data))
+            .catch(error => res.status(500).json(error));
+    }
+
 }
 
 function listOneEmployee(req, res) {
