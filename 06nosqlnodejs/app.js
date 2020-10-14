@@ -13,10 +13,10 @@ const mongo_uri = `mongodb://${settings.database.host}:${settings.database.port}
 const jsonParser = bodyParser.json();
 
 router.get('/employees', routes.employees.listAllEmployees);
-router.get('/employees/:id', middlewares.getIDAsInteger, routes.employees.listOneEmployee);
+router.get('/employees/:id', middlewares.ConvertToObjectID, routes.employees.listOneEmployee);
 router.post('/employees', jsonParser, routes.employees.createEmployee);
-router.patch('/employees/:id', jsonParser, middlewares.getIDAsInteger, routes.employees.updateEmployee);
-router.delete('/employees/:id', middlewares.getIDAsInteger, routes.employees.deleteEmployee);
+router.patch('/employees/:id', jsonParser, middlewares.ConvertToObjectID, routes.employees.updateEmployee);
+router.delete('/employees/:id', middlewares.ConvertToObjectID, routes.employees.deleteEmployee);
 
 router.get('/departments', routes.departments.listAllDepartments);
 router.get('/departments/:deptName/employees', routes.departments.getDepartmentEmployees);

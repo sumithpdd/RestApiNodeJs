@@ -1,12 +1,11 @@
-function getIDAsInteger(req, res, next) {
-  const id = +req.params.id;
-  if (Number.isInteger(id)) {
+const ObjectID = require('mongodb').ObjectID;
+
+function ConvertToObjectID(req, res, next) {
+    const { id } = req.params;
+    req.ObjectID = new ObjectID(id);
     next();
-  } else {
-    return res.status(400).json('ID must be an integer');
-  }
 }
 
 module.exports = {
-  getIDAsInteger
+    ConvertToObjectID
 };
