@@ -19,3 +19,13 @@ nodemon app.js
 to call static files
 
 <http://localhost:3000/fullstack.jpg>
+
+npm install bcrypt
+npm install jsonwebtoken
+
+node .\setup.js
+node .\create-token.js
+
+nodemon app.js
+
+<http://localhost:3000/api/employees/5bfbc78732dbbea589225be7>
