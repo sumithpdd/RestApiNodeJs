@@ -18,7 +18,7 @@ app.locals.knex = knex;
 // const connection = mysql.createConnection(settings.database);
 
 router.get('/employees', routes.employees.listAllEmployees);
-router.get('/employees/:id', middlewares.getIDAsInteger, routes.employees.listOneEmployee);
+router.get('/employees/:id', middlewares.authenticate, middlewares.getIDAsInteger, routes.employees.listOneEmployee);
 
 router.post('/employees', jsonParser, routes.employees.createEmployee);
 router.patch('/employees/:id', jsonParser, middlewares.getIDAsInteger, routes.employees.updateEmployee);
