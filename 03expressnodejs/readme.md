@@ -15,3 +15,6 @@ npm i bcrypt jsonwebtoken
 node .\setup.js
 node .\create-token.js
 
+## GraphQL
+
+npm i apollo-server-express graphql

@@ -5,59 +5,86 @@ const routes = require('./routes');
 const settings = require('./settings');
 const middlewares = require('./middlewares');
 const bodyParser = require('body-parser');
+const { ApolloServer, SchemaDirectiveVisitor } = require('apollo-server-express');
+
+const schema = require('./schema');
+const resolvers = require('./resolvers');
+const cluster = require('cluster');
+const os = require('os');
+
 // const data = require('./data');
 // const mysql = require('mysql');
-const jsonParser = bodyParser.json();
+if (cluster.isMaster) {
+    const cpuCount = os.cpus().length;
+    for (let i = 0; i < cpuCount; i++) {
+        cluster.fork();
+    }
 
-const knex = require('knex')({
-    client: 'mysql',
-    connection: settings.database
-});
-app.locals.knex = knex;
+} else {
+    const jsonParser = bodyParser.json();
 
-// const connection = mysql.createConnection(settings.database);
+    const server = new ApolloServer({
+        typeDefs: schema,
+        resolvers: resolvers
 
-router.get('/employees', routes.employees.listAllEmployees);
-router.get('/employees/:id', middlewares.authenticate, middlewares.getIDAsInteger, routes.employees.listOneEmployee);
+    });
+    server.applyMiddleware({ app });
 
-router.post('/employees', jsonParser, routes.employees.createEmployee);
-router.patch('/employees/:id', jsonParser, middlewares.getIDAsInteger, routes.employees.updateEmployee);
-router.delete('/employees/:id', middlewares.getIDAsInteger, routes.employees.deleteEmployee);
+    const knex = require('knex')({
+        client: 'mysql',
+        connection: settings.database
+    });
+    app.locals.knex = knex;
 
-router.get('/departments', routes.departments.listAllDepartments);
-router.get('/departments/:id', middlewares.getIDAsInteger, routes.departments.listOneDepartment);
-router.get('/departments/:id/employees', middlewares.getIDAsInteger, routes.departments.getDepartmentEmployees);
-router.post('/departments', jsonParser, routes.departments.createDepartment);
-router.patch('/departments/:id', jsonParser, middlewares.getIDAsInteger, routes.departments.updateDepartment);
-router.delete('/departments/:id', middlewares.getIDAsInteger, routes.departments.deleteDepartment);
-// router.get('/employees', (req, res) => res.send(data));
+    // const connection = mysql.createConnection(settings.database);
 
-// router.get('/employees/:id', (req, res) => {
-//     const id = +req.params.id;
-//     const employee = data.filter(d => d.id === id);
-//     res.send(employee);
-// });
+    router.get('/employees', routes.employees.listAllEmployees);
+    router.get('/employees/:id', middlewares.authenticate, middlewares.getIDAsInteger, routes.employees.listOneEmployee);
 
-// router.get('/employees', (req, res) => res.send('Hello World!'));
-app.use('/api', router)
-    // app.use(express.static('images'));
+    router.post('/employees', jsonParser, routes.employees.createEmployee);
+    router.patch('/employees/:id', jsonParser, middlewares.getIDAsInteger, routes.employees.updateEmployee);
+    router.delete('/employees/:id', middlewares.getIDAsInteger, routes.employees.deleteEmployee);
 
-app.use('/static', express.static('images'));
+    router.get('/departments', routes.departments.listAllDepartments);
+    router.get('/departments/:id', middlewares.getIDAsInteger, routes.departments.listOneDepartment);
+    router.get('/departments/:id/employees', middlewares.getIDAsInteger, routes.departments.getDepartmentEmployees);
+    router.post('/departments', jsonParser, routes.departments.createDepartment);
+    router.patch('/departments/:id', jsonParser, middlewares.getIDAsInteger, routes.departments.updateDepartment);
+    router.delete('/departments/:id', middlewares.getIDAsInteger, routes.departments.deleteDepartment);
+    // router.get('/employees', (req, res) => res.send(data));
+
+    // router.get('/employees/:id', (req, res) => {
+    //     const id = +req.params.id;
+    //     const employee = data.filter(d => d.id === id);
+    //     res.send(employee);
+    // });
+
+    // router.get('/employees', (req, res) => res.send('Hello World!'));
+    app.use('/api', router)
+        // app.use(express.static('images'));
+
+    app.use('/static', express.static('images'));
 
 
 
-// app.get('/api/employees', (req, res) => res.send('Hello World!'));
-// app.post('/api/employees', (req, res) => res.send('Http POST in action'));
+    // app.get('/api/employees', (req, res) => res.send('Hello World!'));
+    // app.post('/api/employees', (req, res) => res.send('Http POST in action'));
 
-// connection.connect(error => {
-//     if (error) {
-//         console.error('Error connecting to the database:', error);
-//         return process.exit();
-//     }
-//     app.locals.connection = connection;
-//     app.listen(settings.APIServerPort,
-//         () => console.info(`server is listening on ${settings.APIServerPort}`));
-// })
+    // connection.connect(error => {
+    //     if (error) {
+    //         console.error('Error connecting to the database:', error);
+    //         return process.exit();
+    //     }
+    //     app.locals.connection = connection;
+    //     app.listen(settings.APIServerPort,
+    //         () => console.info(`server is listening on ${settings.APIServerPort}`));
+    // })
 
-app.listen(settings.APIServerPort,
-    () => console.info(`server is listening on ${settings.APIServerPort}`));
+    app.listen(settings.APIServerPort,
+        () => console.info(`server is listening on ${settings.APIServerPort}`));
+}
+
+cluster.on('exit', worker => {
+    console.log(`Worker with ${worker.id} is gone`);
+    cluster.fork();
+})
