@@ -1,32 +1,32 @@
 const express = require('express');
 const app = express();
 const router = express.Router();
-const routes = require('./routes');
 const settings = require('./settings');
+const routes = require('./routes');
 const middlewares = require('./middlewares');
 const bodyParser = require('body-parser');
-const { ApolloServer, SchemaDirectiveVisitor } = require('apollo-server-express');
-
+const { ApolloServer } = require('apollo-server-express');
 const schema = require('./schema');
 const resolvers = require('./resolvers');
 const cluster = require('cluster');
 const os = require('os');
+const cors = require('cors');
+app.use(cors());
 
-// const data = require('./data');
-// const mysql = require('mysql');
 if (cluster.isMaster) {
     const cpuCount = os.cpus().length;
     for (let i = 0; i < cpuCount; i++) {
         cluster.fork();
     }
-
 } else {
     const jsonParser = bodyParser.json();
 
     const server = new ApolloServer({
         typeDefs: schema,
-        resolvers: resolvers
-
+        resolvers: resolvers,
+        context: ({ req }) => {
+            return { authHeader: req.headers.authorization }
+        }
     });
     server.applyMiddleware({ app });
 
@@ -36,11 +36,9 @@ if (cluster.isMaster) {
     });
     app.locals.knex = knex;
 
-    // const connection = mysql.createConnection(settings.database);
-
     router.get('/employees', routes.employees.listAllEmployees);
+    // router.get('/employees/:id', middlewares.getIDAsInteger,routes.employees.listOneEmployee);
     router.get('/employees/:id', middlewares.authenticate, middlewares.getIDAsInteger, routes.employees.listOneEmployee);
-
     router.post('/employees', jsonParser, routes.employees.createEmployee);
     router.patch('/employees/:id', jsonParser, middlewares.getIDAsInteger, routes.employees.updateEmployee);
     router.delete('/employees/:id', middlewares.getIDAsInteger, routes.employees.deleteEmployee);
@@ -51,40 +49,13 @@ if (cluster.isMaster) {
     router.post('/departments', jsonParser, routes.departments.createDepartment);
     router.patch('/departments/:id', jsonParser, middlewares.getIDAsInteger, routes.departments.updateDepartment);
     router.delete('/departments/:id', middlewares.getIDAsInteger, routes.departments.deleteDepartment);
-    // router.get('/employees', (req, res) => res.send(data));
 
-    // router.get('/employees/:id', (req, res) => {
-    //     const id = +req.params.id;
-    //     const employee = data.filter(d => d.id === id);
-    //     res.send(employee);
-    // });
+    app.use('/api', router);
 
-    // router.get('/employees', (req, res) => res.send('Hello World!'));
-    app.use('/api', router)
-        // app.use(express.static('images'));
-
-    app.use('/static', express.static('images'));
-
-
-
-    // app.get('/api/employees', (req, res) => res.send('Hello World!'));
-    // app.post('/api/employees', (req, res) => res.send('Http POST in action'));
-
-    // connection.connect(error => {
-    //     if (error) {
-    //         console.error('Error connecting to the database:', error);
-    //         return process.exit();
-    //     }
-    //     app.locals.connection = connection;
-    //     app.listen(settings.APIServerPort,
-    //         () => console.info(`server is listening on ${settings.APIServerPort}`));
-    // })
-
-    app.listen(settings.APIServerPort,
-        () => console.info(`server is listening on ${settings.APIServerPort}`));
+    app.listen(settings.APIServerPort, () => console.info(`Server is listening on ${settings.APIServerPort}.`));
 }
 
 cluster.on('exit', worker => {
-    console.log(`Worker with ${worker.id} is gone`);
+    console.log(`Worker with ${worker.id} is gone.`);
     cluster.fork();
-})
+});
