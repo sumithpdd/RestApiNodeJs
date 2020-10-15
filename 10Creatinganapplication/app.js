@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+require('dotenv').config();
 const router = express.Router();
 const settings = require('./settings');
 const routes = require('./routes');
@@ -12,6 +13,7 @@ const cluster = require('cluster');
 const os = require('os');
 const cors = require('cors');
 
+console.log(process.env.JWT_SECRET);
 
 if (cluster.isMaster) {
     const cpuCount = os.cpus().length;

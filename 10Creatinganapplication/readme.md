@@ -30,3 +30,4 @@ npm install --global http-server
 http-server .
 
 npm i cors
+npm i dotenv
