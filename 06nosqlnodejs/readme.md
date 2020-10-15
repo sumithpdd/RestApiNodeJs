@@ -29,3 +29,8 @@ node .\create-token.js
 nodemon app.js
 
 <http://localhost:3000/api/employees/5bfbc78732dbbea589225be7>
+
+npm i apollo-server-express graphql
+npm i node-fetch
+
+nodemon app.js

@@ -6,7 +6,20 @@ const routes = require('./routes');
 const middlewares = require('./middlewares');
 const bodyParser = require('body-parser');
 const MongoClient = require('mongodb').MongoClient;
+const { ApolloServer } = require('apollo-server-express');
+const schema = require('./schema');
+const resolvers = require('./resolvers');
+const cors = require('cors');
+app.use(cors());
 
+const server = new ApolloServer({
+    typeDefs: schema,
+    resolvers: resolvers,
+    context: ({ req }) => {
+        return { authHeader: req.headers.authorization }
+    }
+});
+server.applyMiddleware({ app });
 
 const mongo_uri = `mongodb://${settings.database.host}:${settings.database.port}`;
 
